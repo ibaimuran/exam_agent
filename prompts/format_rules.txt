@@ -1,0 +1,29 @@
+【格式规则 — 必须严格遵守】
+
+化学式纯文本规范：
+
+化学式纯文本规范：
+H2O  H2SO4  Na2CO3  Ba(NO3)2  CaCO3  NaOH  CO2  CuSO4
+Fe2(SO4)3  Mg(OH)2  Al(OH)3  Ca(OH)2  Ba(OH)2  KMnO4
+NH4HCO3  Ca3(PO4)2  K2SO4  KCl  NaCl  NaNO3  AgNO3
+ZnSO4  FeCl3  CuCl2  MgCl2  BaCl2  CaCl2  HCl  HNO3
+CH4  C2H5OH  CH3COOH  H2O2  MnO2  P2O5  SO2  SO3
+
+离子符号纯文本规范：
+
+离子符号纯文本规范：
+阳离子：H+  Na+  K+  Ag+  NH4+  Ba2+  Ca2+  Mg2+  Zn2+
+        Cu2+  Fe2+  Fe3+  Al3+
+阴离子：Cl-  OH-  NO3-  SO42-  CO32-  HCO3-  PO43-
+        MnO4-  O2-  S2-  F-
+离子符号后缀 '-' 和数字在元素符号后面，如 SO42-
+
+禁止项（输出中绝对不能出现）：
+$, $$, \(, _{, ^{, \ce{, \text{
+
+禁止：
+- LaTeX 表达式（$...$、$$...$$）
+- Unicode 上下标字符（如 H₂O、SO₄²⁻）
+- Python 变量赋值语法（如 paper_content = """）
+- Markdown 代码块（```）
+- JSON 调试信息（如 {"action": "Final Answer"}）

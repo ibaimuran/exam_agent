@@ -1,0 +1,12 @@
+flask
+openai
+python-dotenv
+PyPDF2
+pdfplumber
+python-docx
+PyMuPDF
+pytesseract
+Pillow
+easyocr
+numpy
+cnocr

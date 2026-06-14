@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>试卷分析助手</title>
+<style>
+:root{--primary:#3b82f6;--bg:#f8fafc;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#94a3b8;--success:#10b981;--danger:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;max-width:1000px;margin:0 auto;padding:2rem}
+h1{font-size:1.6rem;margin-bottom:.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem}
+.card-title{font-size:1.1rem;font-weight:600;margin-bottom:1rem}
+.btn{padding:.6rem 1.5rem;border:none;border-radius:8px;font-size:.9rem;cursor:pointer;font-weight:600}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:disabled{opacity:.5}
+.btn-outline{background:#fff;border:1px solid var(--border);margin-left:.5rem}
+input,textarea{width:100%;padding:.6rem;border:1px solid var(--border);border-radius:6px;font-size:.9rem;margin-top:.5rem}
+textarea{font-family:inherit;min-height:100px;resize:vertical}
+.row{display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap}
+.col{flex:1;min-width:200px}
+.result{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem;max-height:400px;overflow-y:auto;white-space:pre-wrap;font-size:.9rem}
+.dl-btn{margin-top:.5rem;display:inline-block}
+.msg{font-size:.85rem;margin-top:.5rem}
+.msg-ok{color:var(--success)}.msg-err{color:var(--danger)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin-left:.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<h1>试卷分析助手</h1>
+<p style="color:var(--muted);margin-bottom:1.5rem">上传试卷 → AI分析 → 下载xlsx | 错题归档 → 学生分析报告 | 生成错题练习卷</p>
+
+<!-- 功能1：上传试卷 -->
+<div class="card">
+    <div class="card-title">1. 上传试卷文件（PDF/Word）</div>
+    <div class="row">
+        <div class="col"><input type="file" id="paperFile" accept=".pdf,.docx,.doc"></div>
+        <div><button class="btn btn-primary" onclick="uploadPaper()">上传并分析</button></div>
+    </div>
+    <div id="paperMsg" class="msg"></div>
+    <div id="paperResult" class="result" style="display:none"></div>
+    <a id="paperDl" class="dl-btn" style="display:none"></a>
+</div>
+
+<!-- 功能2：错题归档 -->
+<div class="card">
+    <div class="card-title">2. 错题归档与试卷分析</div>
+    <div class="row">
+        <div class="col"><input type="text" id="studentName" placeholder="学生姓名，如：张三"></div>
+        <div class="col"><input type="text" id="wrongNums" placeholder="错题号，选择题写数字，非选题写子题如16(1)"></div>
+        <div class="col"><input type="text" id="wrongPaperName" placeholder="试卷名称（需与上面一致）"></div>
+        <div><button class="btn btn-primary" onclick="submitWrong()">归档并分析</button></div>
+    </div>
+    <div id="wrongMsg" class="msg"></div>
+    <div id="wrongResult" class="result" style="display:none"></div>
+    <a id="wrongDl" class="dl-btn" style="display:none"></a>
+</div>
+
+<!-- 功能3：生成错题卷 -->
+<div class="card">
+    <div class="card-title">3. 生成错题练习卷</div>
+    <div class="row">
+        <div class="col"><input type="text" id="genStudentName" placeholder="学生姓名"></div>
+        <div class="col"><input type="text" id="genPaperName" placeholder="试卷名称（可选）"></div>
+        <div><button class="btn btn-primary" onclick="generatePaper()">生成练习卷</button></div>
+    </div>
+    <div id="genMsg" class="msg"></div>
+    <div id="genResult" class="result" style="display:none"></div>
+    <a id="genDl" class="dl-btn" style="display:none"></a>
+</div>
+
+<script>
+async function uploadPaper(){
+    const file=document.getElementById('paperFile').files[0];
+    const msg=document.getElementById('paperMsg');
+    if(!file){msg.innerHTML='<span class="msg-err">请选择文件</span>';return}
+    const name=file.name.replace(/\.(pdf|docx|doc)$/i,'');
+    msg.innerHTML='<span class="spinner"></span> AI分析中...';
+    const fd=new FormData();fd.append('file',file);fd.append('name',name);
+    try{
+        const r=await fetch('/api/paper/upload',{method:'POST',body:fd});
+        const d=await r.json();
+        if(!r.ok)throw new Error(d.error);
+        document.getElementById('paperResult').style.display='block';
+        document.getElementById('paperResult').textContent=d.analysis;
+        document.getElementById('paperDl').style.display='inline-block';
+        document.getElementById('paperDl').href=`/api/paper/download-docx/${encodeURIComponent(d.paper_name)}`;
+        document.getElementById('paperDl').textContent='下载试卷分析(Word)';
+        document.getElementById('paperDl').className='btn btn-primary dl-btn';
+        msg.innerHTML=`<span class="msg-ok">分析完成，共 ${d.question_count} 题</span>`;
+    }catch(e){msg.innerHTML=`<span class="msg-err">${e.message}</span>`}
+}
+
+async function submitWrong(){
+    const student_name=document.getElementById('studentName').value.trim();
+    const wrong_nums=document.getElementById('wrongNums').value.trim();
+    const paper_name=document.getElementById('wrongPaperName').value.trim();
+    const msg=document.getElementById('wrongMsg');
+    if(!student_name||!wrong_nums){msg.innerHTML='<span class="msg-err">请填写姓名和错题号</span>';return}
+    msg.innerHTML='<span class="spinner"></span> 分析中...';
+    try{
+        const r=await fetch('/api/wrong/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_name,wrong_nums,paper_name})});
+        const d=await r.json();
+        if(!r.ok)throw new Error(d.error);
+        document.getElementById('wrongResult').style.display='block';
+        document.getElementById('wrongResult').textContent='【整体表现】\n'+d.overview+'\n\n【逐题错因分析】\n'+(d.detail_analysis||'')+'\n\n【薄弱知识点】\n'+d.weakness+'\n\n【解决措施】\n'+d.measures;
+        document.getElementById('wrongDl').style.display='inline-block';
+        document.getElementById('wrongDl').href=`/api/wrong/download-docx/${encodeURIComponent(student_name)}`;
+        document.getElementById('wrongDl').textContent='下载学生试卷分析(Word)';
+        document.getElementById('wrongDl').className='btn btn-primary dl-btn';
+        msg.innerHTML=`<span class="msg-ok">归档完成，共 ${d.record_count} 条记录</span>`;
+    }catch(e){msg.innerHTML=`<span class="msg-err">${e.message}</span>`}
+}
+
+async function generatePaper(){
+    const student_name=document.getElementById('genStudentName').value.trim();
+    const paper_name=document.getElementById('genPaperName').value.trim();
+    const msg=document.getElementById('genMsg');
+    if(!student_name){msg.innerHTML='<span class="msg-err">请填写姓名</span>';return}
+    msg.innerHTML='<span class="spinner"></span> 生成中...';
+    try{
+        const r=await fetch('/api/wrong/generate-paper',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_name,paper_name})});
+        const d=await r.json();
+        if(!r.ok)throw new Error(d.error);
+        document.getElementById('genResult').style.display='block';
+        document.getElementById('genResult').textContent=d.exam_paper;
+        document.getElementById('genDl').style.display='inline-block';
+        document.getElementById('genDl').href=`/api/wrong/download-paper-docx/${encodeURIComponent(student_name)}`;
+        document.getElementById('genDl').textContent='下载错题练习卷(Word)';
+        document.getElementById('genDl').className='btn btn-primary dl-btn';
+        msg.innerHTML='<span class="msg-ok">生成完成</span>';
+    }catch(e){msg.innerHTML=`<span class="msg-err">${e.message}</span>`}
+}
+</script>
+</body>
+</html>

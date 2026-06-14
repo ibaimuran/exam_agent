@@ -1,0 +1,17 @@
+# Environment variables (contains API keys)
+.env
+
+# IDE
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Outputs
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db
