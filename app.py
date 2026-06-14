@@ -111,6 +111,11 @@ def paper_download_docx(student_name):
     return send_file(path, as_attachment=True, download_name=f"{student_name}_错题练习卷.docx")
 
 
-# 本地开发时取消下面注释运行：
-# if __name__ == "__main__":
-#     app.run(host="0.0.0.0", port=5000, debug=False)
+if __name__ == "__main__":
+    import time, sys
+    if len(sys.argv) > 1 and sys.argv[1] == "local":
+        app.run(host="0.0.0.0", port=5000, debug=False)
+    else:
+        # ModelScope 环境：保持进程存活，平台自动接管 Flask app 对象
+        while True:
+            time.sleep(3600)
