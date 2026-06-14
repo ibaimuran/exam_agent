@@ -111,7 +111,6 @@ def paper_download_docx(student_name):
     return send_file(path, as_attachment=True, download_name=f"{student_name}_错题练习卷.docx")
 
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"试卷分析 Agent 启动: http://0.0.0.0:{port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+# 本地开发时取消下面注释运行：
+# if __name__ == "__main__":
+#     app.run(host="0.0.0.0", port=5000, debug=False)
